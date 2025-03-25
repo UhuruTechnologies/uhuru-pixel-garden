@@ -262,7 +262,7 @@ function loadMockPixelData() {
             height: 3,
             message: 'Uhuru Cultural Arts Institute',
             owner: 'John Doe',
-            timestamp: Date.now() - 86400000 * 5, // 5 days ago
+            timestamp: Date.now() - 86400000 * 5,
             email: 'john.doe@example.com',
             transactionId: '0x1234567890'
         },
@@ -273,7 +273,7 @@ function loadMockPixelData() {
             height: 2,
             message: 'Supporting our community!',
             owner: 'Jane Doe',
-            timestamp: Date.now() - 86400000 * 3, // 3 days ago
+            timestamp: Date.now() - 86400000 * 3,
             email: 'jane.doe@example.com',
             transactionId: '0x2345678901'
         },
@@ -465,24 +465,22 @@ function initApp() {
         return;
     }
     
-    if (!checks.three) {
-        console.error('THREE.js not loaded');
-        return;
-    }
-    
-    if (!checks.config) {
-        console.error('Config not loaded');
-        return;
-    }
-    
-    if (!checks.pixelGrid) {
-        console.error('PixelGrid class not loaded');
-        return;
-    }
-
     try {
         console.log("Creating pixel grid...");
-        pixelGrid = new window.PixelGrid(checks.elements.canvasContainer);
+        const container = checks.elements.canvasContainer;
+        
+        // Ensure container is properly sized
+        container.style.width = '100%';
+        container.style.height = '600px';
+        container.style.position = 'relative';
+        container.style.backgroundColor = '#f0f0f0';
+        
+        // Create new PixelGrid instance
+        pixelGrid = new window.PixelGrid(container);
+        console.log("PixelGrid instance created");
+        
+        // Initialize with 2D mode
+        pixelGrid.setMode(false);
         
         // Set up click handler
         pixelGrid.onPixelClick((x, y, pixelData) => {
@@ -496,10 +494,12 @@ function initApp() {
         
         // Load mock data
         loadMockPixelData();
-        updateProjectStats();
         
         // Set up UI event handlers
         setupUIEventHandlers();
+        
+        // Update project stats
+        updateProjectStats();
         
         // Set initial theme
         setTheme(isDarkMode);
@@ -567,60 +567,47 @@ function setupUIEventHandlers() {
 
 // Set up view toggles and controls
 function setupViewToggles() {
-    // 2D/3D toggles
     const toggle2DBtn = document.getElementById('toggle2D');
     const toggle3DBtn = document.getElementById('toggle3D');
     
-    if (toggle2DBtn) {
+    if (toggle2DBtn && toggle3DBtn && pixelGrid) {
         toggle2DBtn.addEventListener('click', () => {
-            if (pixelGrid) {
-                pixelGrid.setMode(false);
-                toggle2DBtn.classList.add('active');
-                if (toggle3DBtn) toggle3DBtn.classList.remove('active');
-            }
+            pixelGrid.setMode(false);
+            toggle2DBtn.classList.add('active');
+            toggle3DBtn.classList.remove('active');
         });
-    }
-    
-    if (toggle3DBtn) {
+        
         toggle3DBtn.addEventListener('click', () => {
-            if (pixelGrid) {
-                pixelGrid.setMode(true);
-                toggle3DBtn.classList.add('active');
-                if (toggle2DBtn) toggle2DBtn.classList.remove('active');
-            }
+            pixelGrid.setMode(true);
+            toggle3DBtn.classList.add('active');
+            toggle2DBtn.classList.remove('active');
         });
     }
-    
-    // Zoom controls
+
+    // Set up zoom controls
     const zoomInBtn = document.getElementById('zoomIn');
     const zoomOutBtn = document.getElementById('zoomOut');
     const resetViewBtn = document.getElementById('resetView');
     
-    if (zoomInBtn) {
+    if (zoomInBtn && pixelGrid) {
         zoomInBtn.addEventListener('click', () => {
-            if (pixelGrid) {
-                currentZoomScale = Math.min(currentZoomScale + 0.1, 2.0);
-                pixelGrid.setZoom(currentZoomScale);
-            }
+            currentZoomScale = Math.min(currentZoomScale + 0.1, 2.0);
+            pixelGrid.setZoom(currentZoomScale);
         });
     }
     
-    if (zoomOutBtn) {
+    if (zoomOutBtn && pixelGrid) {
         zoomOutBtn.addEventListener('click', () => {
-            if (pixelGrid) {
-                currentZoomScale = Math.max(currentZoomScale - 0.1, 0.5);
-                pixelGrid.setZoom(currentZoomScale);
-            }
+            currentZoomScale = Math.max(currentZoomScale - 0.1, 0.5);
+            pixelGrid.setZoom(currentZoomScale);
         });
     }
     
-    if (resetViewBtn) {
+    if (resetViewBtn && pixelGrid) {
         resetViewBtn.addEventListener('click', () => {
-            if (pixelGrid) {
-                currentZoomScale = 1;
-                pixelGrid.setZoom(currentZoomScale);
-                pixelGrid.resetView();
-            }
+            currentZoomScale = 1;
+            pixelGrid.setZoom(currentZoomScale);
+            pixelGrid.resetView();
         });
     }
 }

@@ -281,6 +281,8 @@ export default function HomePage() {
         {`
           // Wait for DOM and THREE.js to be ready
           window.addEventListener('load', function() {
+            console.log("Window loaded, checking dependencies...");
+            
             if (!window.THREE) {
               console.error('THREE.js not loaded');
               return;
@@ -291,20 +293,34 @@ export default function HomePage() {
               return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
                 script.src = src;
-                script.onload = resolve;
-                script.onerror = reject;
+                script.onload = () => {
+                  console.log('Loaded:', src);
+                  resolve();
+                };
+                script.onerror = (err) => {
+                  console.error('Error loading:', src, err);
+                  reject(err);
+                };
                 document.body.appendChild(script);
               });
             }
 
             // Load scripts in sequence
             loadScript('/js/config.js')
-              .then(() => loadScript('/js/pixelGrid.js'))
-              .then(() => loadScript('/js/main.js'))
+              .then(() => {
+                console.log('Config loaded, window.uhuruConfig:', !!window.uhuruConfig);
+                return loadScript('/js/pixelGrid.js');
+              })
+              .then(() => {
+                console.log('PixelGrid loaded, window.PixelGrid:', !!window.PixelGrid);
+                return loadScript('/js/main.js');
+              })
               .then(() => {
                 console.log('All scripts loaded, initializing app...');
                 if (window.initApp) {
                   window.initApp();
+                } else {
+                  console.error('initApp not found after loading main.js');
                 }
               })
               .catch(error => {
