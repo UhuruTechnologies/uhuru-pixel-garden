@@ -13,16 +13,11 @@ export default function PixelGridClient() {
   useEffect(() => {
     if (!containerRef.current) return;
     
-    // Import PixelGrid dynamically since it uses browser APIs
+    // Initialize PixelGrid
     const initializeGrid = async () => {
       try {
         // Wait for the window object to be available
         if (typeof window !== 'undefined') {
-          // Wait for THREE.js to be loaded
-          while (!window.THREE) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
-          
           // Initialize PixelGrid
           const grid = new window.PixelGrid(containerRef.current);
           setPixelGrid(grid);
