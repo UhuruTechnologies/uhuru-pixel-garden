@@ -36,6 +36,16 @@ export default function HomePage() {
           href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Outfit:wght@400;600;800&display=swap"
           rel="stylesheet"
         />
+        <script type="importmap" dangerouslySetInnerHTML={{
+          __html: `
+            {
+              "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+              }
+            }
+          `
+        }} />
       </Head>
 
       {/* Theme Toggle Button */}
@@ -266,69 +276,12 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Load THREE.js first */}
-      <Script 
-        src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" 
-        strategy="beforeInteractive"
-      />
-      <Script 
-        src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"
-        strategy="beforeInteractive"
-      />
-
-      {/* Initialize our application */}
-      <Script id="init-app" strategy="afterInteractive">
-        {`
-          // Wait for DOM and THREE.js to be ready
-          window.addEventListener('load', function() {
-            console.log("Window loaded, checking dependencies...");
-            
-            if (!window.THREE) {
-              console.error('THREE.js not loaded');
-              return;
-            }
-
-            // Load our scripts in order
-            function loadScript(src) {
-              return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = () => {
-                  console.log('Loaded:', src);
-                  resolve();
-                };
-                script.onerror = (err) => {
-                  console.error('Error loading:', src, err);
-                  reject(err);
-                };
-                document.body.appendChild(script);
-              });
-            }
-
-            // Load scripts in sequence
-            loadScript('/js/config.js')
-              .then(() => {
-                console.log('Config loaded, window.uhuruConfig:', !!window.uhuruConfig);
-                return loadScript('/js/pixelGrid.js');
-              })
-              .then(() => {
-                console.log('PixelGrid loaded, window.PixelGrid:', !!window.PixelGrid);
-                return loadScript('/js/main.js');
-              })
-              .then(() => {
-                console.log('All scripts loaded, initializing app...');
-                if (window.initApp) {
-                  window.initApp();
-                } else {
-                  console.error('initApp not found after loading main.js');
-                }
-              })
-              .catch(error => {
-                console.error('Error loading scripts:', error);
-              });
-          });
-        `}
-      </Script>
+      <Script type="module" src="/js/config.js" strategy="afterInteractive" />
+      <Script type="module" src="/js/imageHandler.js" strategy="afterInteractive" />
+      <Script type="module" src="/js/paymentHandler.js" strategy="afterInteractive" />
+      <Script type="module" src="/js/pixelGrid.js" strategy="afterInteractive" />
+      <Script type="module" src="/js/pixel-utils.js" strategy="afterInteractive" />
+      <Script type="module" src="/js/main.js" strategy="afterInteractive" />
     </>
   );
 }

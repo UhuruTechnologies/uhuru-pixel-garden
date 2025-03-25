@@ -1,21 +1,16 @@
 // PixelGrid.js - Handles 2D and 3D pixel grid rendering
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { config } from './config.js';
 
-class PixelGrid {
+export class PixelGrid {
     constructor(container) {
         console.log("Initializing PixelGrid...");
         
-        // Get configuration from global object or use defaults
-        const config = window.uhuruConfig || {
-            grid: {
-                width: 100,
-                height: 100,
-                pixelSize: 10
-            },
-            view3D: {
-                ambientLightIntensity: 0.5,
-                directionalLightIntensity: 0.8
-            }
-        };
+        if (!container) {
+            console.error("Container element is missing");
+            throw new Error("Cannot initialize PixelGrid: container element is missing");
+        }
         
         this.container = container;
         this.width = config.grid.width;
@@ -30,56 +25,33 @@ class PixelGrid {
         // Zoom scale
         this.zoomScale = 1;
         
-        // Initialize 2D canvas first
+        // Initialize both renderers
         this.initCanvas();
-        
-        // Check if THREE.js is loaded before initializing 3D
-        if (typeof THREE !== 'undefined') {
-            console.log("THREE.js is available, initializing 3D view");
-            try {
-                this.init3D();
-            } catch (error) {
-                console.error("Failed to initialize 3D view:", error);
-            }
-        } else {
-            console.warn("THREE.js not found, 3D mode will be unavailable");
-        }
+        this.init3D();
         
         // Event handlers
         this.onPixelClickHandlers = [];
         this.setupEventListeners();
         
-        console.log("PixelGrid initialized");
+        console.log("PixelGrid initialized successfully");
     }
     
     initCanvas() {
-        try {
-            // Create 2D canvas
-            this.canvas = document.createElement('canvas');
-            this.canvasBaseWidth = this.width * this.pixelSize;
-            this.canvasBaseHeight = this.height * this.pixelSize;
-            this.canvas.width = this.canvasBaseWidth;
-            this.canvas.height = this.canvasBaseHeight;
-            this.ctx = this.canvas.getContext('2d');
-            
-            // Add canvas to container
-            this.canvas.style.display = 'block';
-            this.container.appendChild(this.canvas);
-            
-            // Draw initial grid
-            this.drawGrid();
-            console.log("2D canvas initialized");
-        } catch (error) {
-            console.error("Error initializing canvas:", error);
-            
-            // Create a fallback display
-            const fallback = document.createElement('div');
-            fallback.innerHTML = `<div style="padding: 20px; background-color: #f8f9fa; border-radius: 8px; text-align: center;">
-                <h3 style="color: #4CAF50;">Canvas Initialization Failed</h3>
-                <p>Unable to initialize the pixel grid. Please try refreshing the page.</p>
-            </div>`;
-            this.container.appendChild(fallback);
-        }
+        // Create 2D canvas
+        this.canvas = document.createElement('canvas');
+        this.canvasBaseWidth = this.width * this.pixelSize;
+        this.canvasBaseHeight = this.height * this.pixelSize;
+        this.canvas.width = this.canvasBaseWidth;
+        this.canvas.height = this.canvasBaseHeight;
+        this.ctx = this.canvas.getContext('2d');
+        
+        // Add canvas to container
+        this.canvas.style.display = 'block';
+        this.container.appendChild(this.canvas);
+        
+        // Draw initial grid
+        this.drawGrid();
+        console.log("2D canvas initialized");
     }
     
     init3D() {
@@ -89,28 +61,26 @@ class PixelGrid {
             this.scene.background = new THREE.Color(0xf0f0f0);
             
             // Camera
-            const aspectRatio = this.container.clientWidth / this.container.clientHeight;
+            const aspectRatio = this.container.clientWidth / this.container.clientHeight || 2;
             this.camera = new THREE.PerspectiveCamera(45, aspectRatio, 1, 2000);
             this.camera.position.set(0, 200, 400);
             this.camera.lookAt(0, 0, 0);
             
             // Renderer
             this.renderer = new THREE.WebGLRenderer({ antialias: true });
-            this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+            this.renderer.setSize(this.container.clientWidth || 800, this.container.clientHeight || 400);
             this.renderer.shadowMap.enabled = true;
             this.renderer3DContainer = document.createElement('div');
             this.renderer3DContainer.style.display = 'none'; // Hide initially
+            this.renderer3DContainer.style.width = '100%';
+            this.renderer3DContainer.style.height = '100%';
             this.renderer3DContainer.appendChild(this.renderer.domElement);
             this.container.appendChild(this.renderer3DContainer);
             
-            // Controls - Check if OrbitControls is available
-            if (typeof THREE.OrbitControls !== 'undefined') {
-                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-                this.controls.enableDamping = true;
-                this.controls.dampingFactor = 0.1;
-            } else {
-                console.warn("OrbitControls not found");
-            }
+            // Controls
+            this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+            this.controls.enableDamping = true;
+            this.controls.dampingFactor = 0.1;
             
             // Lighting
             this.addLights();
@@ -130,22 +100,22 @@ class PixelGrid {
             
             // Start render loop
             this.animate();
-            
-            console.log("3D view initialized");
+            console.log("3D renderer initialized");
         } catch (error) {
-            console.error("Error initializing 3D view:", error);
-            // We'll continue in 2D mode if 3D initialization fails
+            console.error("Error initializing 3D:", error);
+            console.log("3D view will be unavailable");
+            
+            // Disable 3D toggle if we couldn't initialize
+            const toggle3DBtn = document.getElementById('toggle3D');
+            if (toggle3DBtn) {
+                toggle3DBtn.disabled = true;
+                toggle3DBtn.title = "3D view unavailable";
+                toggle3DBtn.style.opacity = "0.5";
+            }
         }
     }
     
     addLights() {
-        const config = window.uhuruConfig || {
-            view3D: {
-                ambientLightIntensity: 0.5,
-                directionalLightIntensity: 0.8
-            }
-        };
-        
         // Ambient light
         const ambientLight = new THREE.AmbientLight(
             0xffffff, 
@@ -199,7 +169,7 @@ class PixelGrid {
             requestAnimationFrame(animateLoop);
             
             if (this.is3DMode) {
-                if (this.controls && this.controls.update) {
+                if (this.controls && typeof this.controls.update === 'function') {
                     this.controls.update();
                 }
                 this.renderer.render(this.scene, this.camera);
@@ -445,8 +415,8 @@ class PixelGrid {
     updateRendererSize() {
         if (!this.renderer) return;
         
-        const width = this.container.clientWidth;
-        const height = this.container.clientHeight;
+        const width = this.container.clientWidth || 800;
+        const height = this.container.clientHeight || 400;
         
         // Update 3D renderer
         if (this.camera) {
@@ -481,7 +451,7 @@ class PixelGrid {
                 this.camera.position.set(0, 200, 400);
                 this.camera.lookAt(0, 0, 0);
             }
-            if (this.controls && this.controls.reset) {
+            if (this.controls && typeof this.controls.reset === 'function') {
                 this.controls.reset();
             }
         } else {
@@ -598,6 +568,3 @@ class PixelGrid {
         }
     }
 }
-
-// Make it available globally
-window.PixelGrid = PixelGrid;

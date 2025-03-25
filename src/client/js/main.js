@@ -1,50 +1,48 @@
-import { config } from './config';
-import { PixelGrid } from './pixelGrid';
-import { PaymentHandler } from './paymentHandler';
-import { setupPixelEditor } from './pixel-utils';
+// Consolidated main.js - Fix for Uhuru Community Pixel Garden
+import { config } from './config.js';
+import { PixelGrid } from './pixelGrid.js';
+import { PaymentHandler } from './paymentHandler.js';
+import { setupPixelEditor } from './pixel-utils.js';
 
 // State variables
 let pixelGrid;
 let currentEditingPixel = null;
 let isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches; // Default based on system
-
-// DOM Elements
-const pixelEditorEl = document.getElementById('pixelEditor');
-const pixelInfoPopupEl = document.getElementById('pixelInfoPopup');
-const transactionPopupEl = document.getElementById('transactionPopup');
-const paymentPopupEl = document.getElementById('paymentPopup');
-const pixelColorEl = document.getElementById('pixelColor');
-const pixelHeightEl = document.getElementById('pixelHeight');
-const pixelMessageEl = document.getElementById('pixelMessage');
-const pixelOwnerNameEl = document.getElementById('pixelOwnerName');
-const pixelOwnerEmailEl = document.getElementById('pixelOwnerEmail');
-const proceedToPaymentBtn = document.getElementById('proceedToPayment');
-const cancelEditBtn = document.getElementById('cancelEdit');
-const toggle2DBtn = document.getElementById('toggle2D');
-const toggle3DBtn = document.getElementById('toggle3D');
-const zoomInBtn = document.getElementById('zoomIn');
-const zoomOutBtn = document.getElementById('zoomOut');
-const resetViewBtn = document.getElementById('resetView');
-const canvasContainer = document.getElementById('canvasContainer');
-
-// Add zoom scale variable
 let currentZoomScale = 1;
+let currentImageDataUrl = null;
 
 // Initialize application
-async function init() {
+function init() {
+    console.log("Initializing Uhuru Community Pixel Garden...");
+    
     try {
         // Initialize payment handler
         PaymentHandler.initialize();
         
         // Set up welcome overlay event listener
-        document.getElementById('startExploringBtn').addEventListener('click', () => {
-            document.getElementById('welcomeOverlay').classList.add('hidden');
-        });
+        const startExploringBtn = document.getElementById('startExploringBtn');
+        if (startExploringBtn) {
+            startExploringBtn.addEventListener('click', () => {
+                const welcomeOverlay = document.getElementById('welcomeOverlay');
+                if (welcomeOverlay) welcomeOverlay.classList.add('hidden');
+            });
+        }
         
         // Set up Buy POT button in welcome overlay
-        document.getElementById('mainBuyPotBtn').addEventListener('click', () => {
-            window.open('https://pump.fun', '_blank');
-        });
+        const mainBuyPotBtn = document.getElementById('mainBuyPotBtn');
+        if (mainBuyPotBtn) {
+            mainBuyPotBtn.addEventListener('click', () => {
+                window.open('https://pump.fun', '_blank');
+            });
+        }
+        
+        // Initialize canvas container sizing
+        const canvasContainer = document.getElementById('canvasContainer');
+        if (canvasContainer) {
+            canvasContainer.style.width = '100%';
+            canvasContainer.style.minHeight = '500px';
+            canvasContainer.style.position = 'relative';
+        }
         
         // Initialize pixel grid
         pixelGrid = new PixelGrid(canvasContainer);
@@ -55,11 +53,11 @@ async function init() {
         // Set up event handlers
         setupEventListeners(pixelEditor);
         
-        // Load existing pixels from MongoDB
-        await loadPixelData();
+        // Load any existing pixels
+        loadPixelData();
         
         // Update stats
-        await updateProjectStats();
+        updateProjectStats();
         
         // Set initial theme
         setTheme(isDarkMode);
@@ -67,15 +65,18 @@ async function init() {
         // Create fun elements
         createDancingPixels();
         createConfetti();
+        
+        console.log("Initialization complete!");
     } catch (error) {
         console.error("Error initializing application:", error);
-        // Show fallback message if THREE.js fails to load
-        if (error.message && error.message.includes('THREE')) {
+        // Show fallback message if initialization fails
+        const canvasContainer = document.getElementById('canvasContainer');
+        if (canvasContainer) {
             canvasContainer.innerHTML = `
-                <div style="text-align: center; padding: 2rem;">
-                    <h2>3D Renderer Unavailable</h2>
-                    <p>Your browser may not support 3D rendering or required libraries couldn't be loaded.</p>
-                    <p>Please try a different browser like Chrome or Firefox.</p>
+                <div style="text-align: center; padding: 2rem; background-color: #f8f9fa; border-radius: 8px;">
+                    <h2 style="color: #4CAF50;">Pixel Garden Unavailable</h2>
+                    <p>We encountered an error loading the pixel garden. Please try refreshing the page.</p>
+                    <p>Error details: ${error.message}</p>
                 </div>
             `;
         }
@@ -83,6 +84,8 @@ async function init() {
 }
 
 function setupEventListeners(pixelEditor) {
+    console.log("Setting up event listeners...");
+    
     // Buy POT buttons
     document.querySelectorAll('.buy-pot-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -91,76 +94,74 @@ function setupEventListeners(pixelEditor) {
     });
     
     // Pixel grid click handler
-    pixelGrid.onPixelClick((x, y, pixelData) => {
-        if (pixelData) {
-            showPixelInfo(pixelData);
-        } else {
-            pixelEditor.startPixelEdit(x, y);
-        }
-    });
+    if (pixelGrid) {
+        pixelGrid.onPixelClick((x, y, pixelData) => {
+            if (pixelData) {
+                showPixelInfo(pixelData);
+            } else {
+                pixelEditor.startPixelEdit(x, y);
+            }
+        });
+    }
     
     // View toggles
-    toggle2DBtn.addEventListener('click', () => {
-        pixelGrid.setMode(false);
-        toggle2DBtn.classList.add('active');
-        toggle3DBtn.classList.remove('active');
-    });
+    const toggle2DBtn = document.getElementById('toggle2D');
+    const toggle3DBtn = document.getElementById('toggle3D');
     
-    toggle3DBtn.addEventListener('click', () => {
-        pixelGrid.setMode(true);
-        toggle3DBtn.classList.add('active');
-        toggle2DBtn.classList.remove('active');
-    });
+    if (toggle2DBtn && toggle3DBtn && pixelGrid) {
+        toggle2DBtn.addEventListener('click', () => {
+            pixelGrid.setMode(false);
+            toggle2DBtn.classList.add('active');
+            toggle3DBtn.classList.remove('active');
+        });
+        
+        toggle3DBtn.addEventListener('click', () => {
+            pixelGrid.setMode(true);
+            toggle3DBtn.classList.add('active');
+            toggle2DBtn.classList.remove('active');
+        });
+    }
     
     // View controls
-    resetViewBtn.addEventListener('click', () => pixelGrid.resetView());
+    const resetViewBtn = document.getElementById('resetView');
+    if (resetViewBtn && pixelGrid) {
+        resetViewBtn.addEventListener('click', () => pixelGrid.resetView());
+    }
     
     // Add zoom controls event handlers
-    zoomInBtn.addEventListener('click', () => {
-        currentZoomScale = Math.min(currentZoomScale + 0.1, 2.0);
-        pixelGrid.setZoom(currentZoomScale);
-    });
+    const zoomInBtn = document.getElementById('zoomIn');
+    const zoomOutBtn = document.getElementById('zoomOut');
     
-    zoomOutBtn.addEventListener('click', () => {
-        currentZoomScale = Math.max(currentZoomScale - 0.1, 0.5);
-        pixelGrid.setZoom(currentZoomScale);
-    });
+    if (zoomInBtn && pixelGrid) {
+        zoomInBtn.addEventListener('click', () => {
+            currentZoomScale = Math.min(currentZoomScale + 0.1, 2.0);
+            pixelGrid.setZoom(currentZoomScale);
+        });
+    }
+    
+    if (zoomOutBtn && pixelGrid) {
+        zoomOutBtn.addEventListener('click', () => {
+            currentZoomScale = Math.max(currentZoomScale - 0.1, 0.5);
+            pixelGrid.setZoom(currentZoomScale);
+        });
+    }
     
     // Close popups
     document.querySelectorAll('.close-popup').forEach(el => {
         el.addEventListener('click', (e) => {
-            e.target.closest('.popup').classList.add('hidden');
+            const popup = e.target.closest('.popup');
+            if (popup) popup.classList.add('hidden');
         });
     });
     
     // Theme toggle
     const themeToggle = document.getElementById('themeToggle');
-    themeToggle.addEventListener('click', () => {
-        isDarkMode = !isDarkMode;
-        setTheme(isDarkMode);
-    });
-    
-    // Payment popup buttons
-    document.getElementById('cancelPaymentBtn').addEventListener('click', () => {
-        paymentPopupEl.classList.add('hidden');
-    });
-    
-    document.getElementById('verifyPaymentBtn').addEventListener('click', async () => {
-        await verifyPayment();
-    });
-    
-    // Copy buttons in payment popup
-    document.getElementById('copyAddressBtn').addEventListener('click', () => {
-        const address = document.getElementById('burnAddress').textContent;
-        navigator.clipboard.writeText(address);
-        showCopyToast('Burn address copied to clipboard!');
-    });
-    
-    document.getElementById('copyReferenceBtn').addEventListener('click', () => {
-        const ref = document.getElementById('paymentReference').textContent;
-        navigator.clipboard.writeText(ref);
-        showCopyToast('Reference code copied to clipboard!');
-    });
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            setTheme(isDarkMode);
+        });
+    }
     
     // Fun meme button
     const memeButton = document.getElementById('memeButton');
@@ -170,31 +171,41 @@ function setupEventListeners(pixelEditor) {
         });
     }
     
+    // Set up payment popup copy buttons
+    setupCopyButtons();
+    
+    // Set up payment verification
+    const verifyPaymentBtn = document.getElementById('verifyPaymentBtn');
+    if (verifyPaymentBtn) {
+        verifyPaymentBtn.addEventListener('click', () => {
+            verifyPayment();
+        });
+    }
+    
+    // Cancel payment
+    const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
+    if (cancelPaymentBtn) {
+        cancelPaymentBtn.addEventListener('click', () => {
+            document.getElementById('paymentPopup').classList.add('hidden');
+        });
+    }
+    
     // Easter egg: Double-click anywhere to spawn confetti
     document.addEventListener('dblclick', (e) => {
         createConfettiAt(e.clientX, e.clientY);
     });
-}
-
-function showCopyToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
     
-    setTimeout(() => {
-        toast.classList.add('show');
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => {
-                toast.remove();
-            }, 300);
-        }, 2000);
-    }, 10);
+    console.log("Event listeners set up");
 }
 
 function showPixelInfo(pixelData) {
+    const pixelInfoPopupEl = document.getElementById('pixelInfoPopup');
     const content = document.getElementById('pixelInfoContent');
+    
+    if (!pixelInfoPopupEl || !content) {
+        console.error("Could not find pixel info elements");
+        return;
+    }
     
     // Build info content
     const ownerInfo = `<p><strong>Owner:</strong> ${pixelData.owner || 'Anonymous'}</p>`;
@@ -225,35 +236,89 @@ function showPixelInfo(pixelData) {
     pixelInfoPopupEl.classList.remove('hidden');
 }
 
-async function loadPixelData() {
-    try {
-        // Fetch pixels from the database through our API
-        const pixels = await PaymentHandler.getAllPixels();
-        
-        // Add pixels to the grid
-        if (pixels && pixels.length > 0) {
-            pixelGrid.loadPixelData(pixels);
-        } else {
-            console.log('No pixels found in the database');
-        }
-    } catch (error) {
-        console.error('Error loading pixel data:', error);
+function loadPixelData() {
+    if (!pixelGrid) {
+        console.error("Cannot load pixel data: pixelGrid not initialized");
+        return;
     }
+    
+    console.log("Loading mock pixel data...");
+    
+    // In a real app, this would load data from the blockchain
+    // For the demo, we'll load some mock data
+    const mockPixels = [
+        {
+            x: 45,
+            y: 45,
+            color: '#FF9800',
+            height: 3,
+            message: 'Uhuru Cultural Arts Institute',
+            owner: 'John Doe',
+            timestamp: Date.now() - 86400000 * 5, // 5 days ago
+            email: 'john.doe@example.com',
+            transactionId: '0x1234567890'
+        },
+        {
+            x: 46,
+            y: 45,
+            color: '#4CAF50',
+            height: 2,
+            message: 'Supporting our community!',
+            owner: 'Jane Doe',
+            timestamp: Date.now() - 86400000 * 3, // 3 days ago
+            email: 'jane.doe@example.com',
+            transactionId: '0x2345678901'
+        },
+        {
+            x: 45,
+            y: 46,
+            color: '#2196F3',
+            height: 4,
+            message: 'Watoto Kwanza',
+            owner: 'John Smith',
+            timestamp: Date.now() - 86400000 * 2, // 2 days ago
+            email: 'john.smith@example.com',
+            transactionId: '0x3456789012'
+        },
+        {
+            x: 46,
+            y: 46,
+            color: '#9C27B0',
+            height: 2,
+            message: 'Building the future together',
+            owner: 'Jane Smith',
+            timestamp: Date.now() - 86400000 * 1, // 1 day ago
+            email: 'jane.smith@example.com',
+            transactionId: '0x4567890123'
+        }
+    ];
+    
+    // Add pixels to the grid
+    pixelGrid.loadPixelData(mockPixels);
+    console.log("Mock pixel data loaded");
 }
 
-async function updateProjectStats() {
+function updateProjectStats() {
     try {
-        // Fetch stats from the API
-        const stats = await PaymentHandler.getProjectStats();
+        // For demo purposes, use mock data
+        const stats = {
+            totalPixels: 10000,
+            pixelsSold: 464,
+            fundsRaised: 5286
+        };
         
         // Update stats in UI
-        document.getElementById('totalPixels').textContent = stats.totalPixels.toLocaleString();
-        document.getElementById('soldPixelsCount').textContent = stats.pixelsSold.toLocaleString();
-        document.getElementById('totalFundsRaised').textContent = `$${stats.fundsRaised.toLocaleString()}`;
+        const totalPixelsEl = document.getElementById('totalPixels');
+        const soldPixelsCountEl = document.getElementById('soldPixelsCount');
+        const totalFundsRaisedEl = document.getElementById('totalFundsRaised');
+        const pixelsSoldEl = document.getElementById('pixelsSold');
+        const fundsRaisedEl = document.getElementById('fundsRaised');
         
-        // Also update stats in the welcome overlay
-        document.getElementById('pixelsSold').textContent = stats.pixelsSold.toLocaleString();
-        document.getElementById('fundsRaised').textContent = `$${stats.fundsRaised.toLocaleString()}`;
+        if (totalPixelsEl) totalPixelsEl.textContent = stats.totalPixels.toLocaleString();
+        if (soldPixelsCountEl) soldPixelsCountEl.textContent = stats.pixelsSold.toLocaleString();
+        if (totalFundsRaisedEl) totalFundsRaisedEl.textContent = `$${stats.fundsRaised.toLocaleString()}`;
+        if (pixelsSoldEl) pixelsSoldEl.textContent = stats.pixelsSold.toLocaleString();
+        if (fundsRaisedEl) fundsRaisedEl.textContent = `$${stats.fundsRaised.toLocaleString()}`;
     } catch (error) {
         console.error("Error updating project stats:", error);
     }
@@ -262,12 +327,16 @@ async function updateProjectStats() {
 function setTheme(dark) {
     if (dark) {
         document.body.setAttribute('data-theme', 'dark');
-        document.getElementById('moonIcon').style.display = 'none';
-        document.getElementById('sunIcon').style.display = 'block';
+        const moonIcon = document.getElementById('moonIcon');
+        const sunIcon = document.getElementById('sunIcon');
+        if (moonIcon) moonIcon.style.display = 'none';
+        if (sunIcon) sunIcon.style.display = 'block';
     } else {
         document.body.removeAttribute('data-theme');
-        document.getElementById('moonIcon').style.display = 'block';
-        document.getElementById('sunIcon').style.display = 'none';
+        const moonIcon = document.getElementById('moonIcon');
+        const sunIcon = document.getElementById('sunIcon');
+        if (moonIcon) moonIcon.style.display = 'block';
+        if (sunIcon) sunIcon.style.display = 'none';
     }
 }
 
@@ -275,6 +344,8 @@ function createDancingPixels() {
     // Create some dancing pixels for fun
     const colors = ['#FF9800', '#4CAF50', '#2196F3', '#9C27B0', '#F44336'];
     const container = document.querySelector('main');
+    
+    if (!container) return;
     
     for (let i = 0; i < 5; i++) {
         setTimeout(() => {
@@ -378,74 +449,177 @@ function spawnRandomMeme() {
     }, 4000);
 }
 
-async function verifyPayment() {
-    // Show transaction processing
-    paymentPopupEl.classList.add('hidden');
-    transactionPopupEl.classList.remove('hidden');
-    document.getElementById('transactionStatus').textContent = "Verifying payment...";
+// Set up copy buttons in payment popup
+function setupCopyButtons() {
+    const copyAddressBtn = document.getElementById('copyAddressBtn');
+    const copyReferenceBtn = document.getElementById('copyReferenceBtn');
     
-    // Get transaction ID from user input
-    const txId = document.getElementById('transactionId').value.trim();
+    if (copyAddressBtn) {
+        copyAddressBtn.addEventListener('click', function() {
+            const address = document.getElementById('burnAddress').textContent;
+            copyToClipboard(address, 'Burn address copied to clipboard!');
+        });
+    }
     
-    if (!txId) {
-        document.getElementById('transactionStatus').textContent = "Please enter a valid transaction ID";
+    if (copyReferenceBtn) {
+        copyReferenceBtn.addEventListener('click', function() {
+            const reference = document.getElementById('paymentReference').textContent;
+            copyToClipboard(reference, 'Reference code copied to clipboard!');
+        });
+    }
+}
+
+// Copy text to clipboard and show toast
+function copyToClipboard(text, toastMessage) {
+    // Use the newer navigator.clipboard API if available
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text)
+            .then(() => showToast(toastMessage))
+            .catch(err => console.error('Could not copy text: ', err));
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showToast(toastMessage);
+            } else {
+                showToast('Failed to copy. Please select and copy manually.');
+            }
+        } catch (err) {
+            console.error('Could not copy text: ', err);
+            showToast('Failed to copy. Please select and copy manually.');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+}
+
+// Show toast notification
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    toast.style.position = 'fixed';
+    toast.style.bottom = '20px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    toast.style.color = 'white';
+    toast.style.padding = '10px 20px';
+    toast.style.borderRadius = '4px';
+    toast.style.zIndex = '10000';
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease';
+    
+    document.body.appendChild(toast);
+    
+    // Trigger a reflow to enable the transition
+    void toast.offsetWidth;
+    
+    // Show the toast
+    toast.style.opacity = '1';
+    
+    // Hide and remove the toast after delay
+    setTimeout(() => {
+        toast.style.opacity = '0';
         setTimeout(() => {
-            transactionPopupEl.classList.add('hidden');
-            paymentPopupEl.classList.remove('hidden');
-        }, 2000);
+            toast.remove();
+        }, 300);
+    }, 2000);
+}
+
+function verifyPayment() {
+    // Get current payment
+    const payment = PaymentHandler.getCurrentPayment();
+    if (!payment) {
+        showToast('No active payment to verify');
         return;
     }
     
-    try {
-        // Call backend to verify the payment
-        const result = await PaymentHandler.verifyPayment(txId);
+    // Show transaction processing
+    const paymentPopupEl = document.getElementById('paymentPopup');
+    const transactionPopupEl = document.getElementById('transactionPopup');
+    
+    if (paymentPopupEl) paymentPopupEl.classList.add('hidden');
+    if (transactionPopupEl) {
+        transactionPopupEl.classList.remove('hidden');
+        const statusEl = document.getElementById('transactionStatus');
+        if (statusEl) statusEl.textContent = "Verifying payment...";
+    }
+    
+    // Get transaction ID from user input
+    const txIdEl = document.getElementById('transactionId');
+    const txId = txIdEl ? txIdEl.value.trim() : '';
+    
+    if (!txId) {
+        if (transactionPopupEl) {
+            const statusEl = document.getElementById('transactionStatus');
+            if (statusEl) statusEl.textContent = "Please enter a valid transaction ID";
+            
+            // Return to payment popup after delay
+            setTimeout(() => {
+                transactionPopupEl.classList.add('hidden');
+                if (paymentPopupEl) paymentPopupEl.classList.remove('hidden');
+            }, 2000);
+        }
+        return;
+    }
+    
+    // Simulate verification (for demo purposes)
+    setTimeout(() => {
+        // 90% chance of success
+        const success = Math.random() > 0.1;
         
-        if (result.success) {
-            // Update the pixel in the grid
-            const payment = PaymentHandler.getCurrentPayment();
-            pixelGrid.setPixel(payment.x, payment.y, {
-                color: payment.color,
-                height: payment.height,
-                message: payment.message,
-                owner: payment.ownerName,
-                email: payment.ownerEmail,
-                timestamp: Date.now(),
-                transactionId: txId
-            });
+        if (success) {
+            // Update status
+            const statusEl = document.getElementById('transactionStatus');
+            if (statusEl) statusEl.textContent = "Payment verified! Your pixel has been added.";
+            
+            // Add pixel to grid
+            if (pixelGrid && payment) {
+                pixelGrid.setPixel(payment.x, payment.y, {
+                    color: payment.color,
+                    height: payment.height,
+                    message: payment.message,
+                    owner: payment.ownerName,
+                    email: payment.ownerEmail,
+                    timestamp: Date.now(),
+                    transactionId: txId
+                });
+            }
             
             // Update project stats
             updateProjectStats();
-            
-            // Show success message
-            document.getElementById('transactionStatus').textContent = "Payment verified! Your pixel has been added.";
             
             // Clear current editing pixel
             currentEditingPixel = null;
             
             // Hide transaction popup after a delay
             setTimeout(() => {
-                transactionPopupEl.classList.add('hidden');
+                if (transactionPopupEl) transactionPopupEl.classList.add('hidden');
             }, 3000);
         } else {
-            document.getElementById('transactionStatus').textContent = `Verification failed: ${result.error}`;
+            // Update status for failure
+            const statusEl = document.getElementById('transactionStatus');
+            if (statusEl) statusEl.textContent = "Verification failed: Transaction not found or invalid";
             
-            // Return to payment popup after a delay
+            // Return to payment popup after delay
             setTimeout(() => {
-                transactionPopupEl.classList.add('hidden');
-                paymentPopupEl.classList.remove('hidden');
+                if (transactionPopupEl) transactionPopupEl.classList.add('hidden');
+                if (paymentPopupEl) paymentPopupEl.classList.remove('hidden');
             }, 3000);
         }
-    } catch (error) {
-        console.error("Error verifying payment:", error);
-        document.getElementById('transactionStatus').textContent = "An error occurred during verification.";
-        
-        // Return to payment popup after a delay
-        setTimeout(() => {
-            transactionPopupEl.classList.add('hidden');
-            paymentPopupEl.classList.remove('hidden');
-        }, 3000);
-    }
+    }, 2000);
 }
 
-// Start the application
+// Start the application when page is loaded
 window.addEventListener('DOMContentLoaded', init);

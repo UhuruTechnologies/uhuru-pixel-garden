@@ -1,9 +1,17 @@
+// PixelGrid.js - Handles 2D and 3D pixel grid rendering
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { config } from './config';
+import { config } from './config.js';
 
 export class PixelGrid {
     constructor(container) {
+        console.log("Initializing PixelGrid...");
+        
+        if (!container) {
+            console.error("Container element is missing");
+            throw new Error("Cannot initialize PixelGrid: container element is missing");
+        }
+        
         this.container = container;
         this.width = config.grid.width;
         this.height = config.grid.height;
@@ -24,6 +32,8 @@ export class PixelGrid {
         // Event handlers
         this.onPixelClickHandlers = [];
         this.setupEventListeners();
+        
+        console.log("PixelGrid initialized successfully");
     }
     
     initCanvas() {
@@ -41,51 +51,68 @@ export class PixelGrid {
         
         // Draw initial grid
         this.drawGrid();
+        console.log("2D canvas initialized");
     }
     
     init3D() {
-        // Setup THREE.js scene
-        this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0xf0f0f0);
-        
-        // Camera
-        const aspectRatio = this.container.clientWidth / this.container.clientHeight;
-        this.camera = new THREE.PerspectiveCamera(45, aspectRatio, 1, 2000);
-        this.camera.position.set(0, 200, 400);
-        this.camera.lookAt(0, 0, 0);
-        
-        // Renderer
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-        this.renderer.shadowMap.enabled = true;
-        this.renderer3DContainer = document.createElement('div');
-        this.renderer3DContainer.style.display = 'none'; // Hide initially
-        this.renderer3DContainer.appendChild(this.renderer.domElement);
-        this.container.appendChild(this.renderer3DContainer);
-        
-        // Controls
-        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.1;
-        
-        // Lighting
-        this.addLights();
-        
-        // Ground plane
-        this.addGroundPlane();
-        
-        // Grid helper
-        const gridHelper = new THREE.GridHelper(
-            this.width * this.pixelSize, 
-            this.width,
-            0x888888,
-            0xcccccc
-        );
-        gridHelper.position.y = 0.1; // Slightly above ground to avoid z-fighting
-        this.scene.add(gridHelper);
-        
-        // Start render loop
-        this.animate();
+        try {
+            // Setup THREE.js scene
+            this.scene = new THREE.Scene();
+            this.scene.background = new THREE.Color(0xf0f0f0);
+            
+            // Camera
+            const aspectRatio = this.container.clientWidth / this.container.clientHeight || 2;
+            this.camera = new THREE.PerspectiveCamera(45, aspectRatio, 1, 2000);
+            this.camera.position.set(0, 200, 400);
+            this.camera.lookAt(0, 0, 0);
+            
+            // Renderer
+            this.renderer = new THREE.WebGLRenderer({ antialias: true });
+            this.renderer.setSize(this.container.clientWidth || 800, this.container.clientHeight || 400);
+            this.renderer.shadowMap.enabled = true;
+            this.renderer3DContainer = document.createElement('div');
+            this.renderer3DContainer.style.display = 'none'; // Hide initially
+            this.renderer3DContainer.style.width = '100%';
+            this.renderer3DContainer.style.height = '100%';
+            this.renderer3DContainer.appendChild(this.renderer.domElement);
+            this.container.appendChild(this.renderer3DContainer);
+            
+            // Controls
+            this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+            this.controls.enableDamping = true;
+            this.controls.dampingFactor = 0.1;
+            
+            // Lighting
+            this.addLights();
+            
+            // Ground plane
+            this.addGroundPlane();
+            
+            // Grid helper
+            const gridHelper = new THREE.GridHelper(
+                this.width * this.pixelSize, 
+                this.width,
+                0x888888,
+                0xcccccc
+            );
+            gridHelper.position.y = 0.1; // Slightly above ground to avoid z-fighting
+            this.scene.add(gridHelper);
+            
+            // Start render loop
+            this.animate();
+            console.log("3D renderer initialized");
+        } catch (error) {
+            console.error("Error initializing 3D:", error);
+            console.log("3D view will be unavailable");
+            
+            // Disable 3D toggle if we couldn't initialize
+            const toggle3DBtn = document.getElementById('toggle3D');
+            if (toggle3DBtn) {
+                toggle3DBtn.disabled = true;
+                toggle3DBtn.title = "3D view unavailable";
+                toggle3DBtn.style.opacity = "0.5";
+            }
+        }
     }
     
     addLights() {
@@ -136,15 +163,25 @@ export class PixelGrid {
     }
     
     animate() {
-        requestAnimationFrame(() => this.animate());
+        if (!this.renderer) return;
         
-        if (this.is3DMode) {
-            this.controls.update();
-            this.renderer.render(this.scene, this.camera);
-        }
+        const animateLoop = () => {
+            requestAnimationFrame(animateLoop);
+            
+            if (this.is3DMode) {
+                if (this.controls && typeof this.controls.update === 'function') {
+                    this.controls.update();
+                }
+                this.renderer.render(this.scene, this.camera);
+            }
+        };
+        
+        animateLoop();
     }
     
     drawGrid() {
+        if (!this.ctx) return;
+        
         // Clear canvas
         this.ctx.fillStyle = '#f0f0f0';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -188,11 +225,13 @@ export class PixelGrid {
     }
     
     drawPixel2D(x, y, color) {
+        if (!this.ctx) return;
+        
         const padding = 1; // Small padding for visual clarity
         this.ctx.fillStyle = color || '#cccccc';
         
         // Check if color is actually an image data URL
-        if (color && color.startsWith('data:image')) {
+        if (color && typeof color === 'string' && color.startsWith('data:image')) {
             const img = new Image();
             img.onload = () => {
                 this.ctx.drawImage(
@@ -215,6 +254,8 @@ export class PixelGrid {
     }
     
     highlightPixel(x, y) {
+        if (!this.ctx) return;
+        
         this.ctx.strokeStyle = '#ff5722';
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(
@@ -226,64 +267,82 @@ export class PixelGrid {
     }
     
     addPixel3D(x, y, pixelData) {
-        // Calculate position
-        const posX = (x - this.width / 2) * this.pixelSize + this.pixelSize / 2;
-        const posZ = (y - this.height / 2) * this.pixelSize + this.pixelSize / 2;
-        const posY = (pixelData.height || 1) * this.pixelSize / 2;
+        if (!this.scene) return;
         
-        // Create geometry
-        const geometry = new THREE.BoxGeometry(
-            this.pixelSize - 1,
-            pixelData.height * this.pixelSize,
-            this.pixelSize - 1
-        );
-        
-        // Create material
-        let material;
-        
-        // Check if color is actually an image data URL
-        if (pixelData.color && pixelData.color.startsWith('data:image')) {
-            // Create texture from image
-            const texture = new THREE.TextureLoader().load(pixelData.color);
-            material = new THREE.MeshStandardMaterial({
-                map: texture,
-                roughness: 0.7,
-                metalness: 0.3
-            });
-        } else {
-            material = new THREE.MeshStandardMaterial({
-                color: new THREE.Color(pixelData.color || '#cccccc'),
-                roughness: 0.7,
-                metalness: 0.3
-            });
+        try {
+            // Calculate position
+            const posX = (x - this.width / 2) * this.pixelSize + this.pixelSize / 2;
+            const posZ = (y - this.height / 2) * this.pixelSize + this.pixelSize / 2;
+            const posY = (pixelData.height || 1) * this.pixelSize / 2;
+            
+            // Create geometry
+            const geometry = new THREE.BoxGeometry(
+                this.pixelSize - 1,
+                pixelData.height * this.pixelSize,
+                this.pixelSize - 1
+            );
+            
+            // Create material
+            let material;
+            
+            // Check if color is actually an image data URL
+            if (pixelData.color && typeof pixelData.color === 'string' && pixelData.color.startsWith('data:image')) {
+                // Create texture from image
+                const texture = new THREE.TextureLoader().load(pixelData.color);
+                material = new THREE.MeshStandardMaterial({
+                    map: texture,
+                    roughness: 0.7,
+                    metalness: 0.3
+                });
+            } else {
+                material = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color(pixelData.color || '#cccccc'),
+                    roughness: 0.7,
+                    metalness: 0.3
+                });
+            }
+            
+            // Create mesh
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(posX, posY, posZ);
+            cube.castShadow = true;
+            cube.receiveShadow = true;
+            
+            // Store reference to the mesh in pixelData
+            pixelData.mesh = cube;
+            
+            // Store pixel data for 3D object
+            cube.userData = {
+                pixelX: x,
+                pixelY: y,
+                pixelData: pixelData
+            };
+            
+            // Add to scene
+            this.scene.add(cube);
+        } catch (error) {
+            console.error('Error adding 3D pixel:', error);
         }
-        
-        // Create mesh
-        const cube = new THREE.Mesh(geometry, material);
-        cube.position.set(posX, posY, posZ);
-        cube.castShadow = true;
-        cube.receiveShadow = true;
-        
-        // Store reference to the mesh in pixelData
-        pixelData.mesh = cube;
-        
-        // Store pixel data for 3D object
-        cube.userData = {
-            pixelX: x,
-            pixelY: y,
-            pixelData: pixelData
-        };
-        
-        // Add to scene
-        this.scene.add(cube);
     }
     
     removePixel3D(pixelData) {
-        if (pixelData && pixelData.mesh) {
-            this.scene.remove(pixelData.mesh);
-            pixelData.mesh.geometry.dispose();
-            pixelData.mesh.material.dispose();
-            pixelData.mesh = null;
+        if (!this.scene) return;
+        
+        try {
+            if (pixelData && pixelData.mesh) {
+                this.scene.remove(pixelData.mesh);
+                if (pixelData.mesh.geometry) pixelData.mesh.geometry.dispose();
+                if (pixelData.mesh.material) {
+                    if (Array.isArray(pixelData.mesh.material)) {
+                        pixelData.mesh.material.forEach(material => material.dispose());
+                    } else {
+                        pixelData.mesh.material.dispose();
+                    }
+                }
+                pixelData.mesh = null;
+            }
+        } catch (error) {
+            console.error('Error removing 3D pixel:', error);
         }
     }
     
@@ -329,6 +388,12 @@ export class PixelGrid {
         this.is3DMode = mode3D;
         
         if (mode3D) {
+            // Check if 3D is available
+            if (!this.renderer || !this.renderer3DContainer) {
+                console.warn('3D mode not available');
+                return;
+            }
+            
             // Switch to 3D view
             this.canvas.style.display = 'none';
             this.renderer3DContainer.style.display = 'block';
@@ -338,7 +403,9 @@ export class PixelGrid {
         } else {
             // Switch to 2D view
             this.canvas.style.display = 'block';
-            this.renderer3DContainer.style.display = 'none';
+            if (this.renderer3DContainer) {
+                this.renderer3DContainer.style.display = 'none';
+            }
             
             // Redraw the 2D grid to ensure it's up to date
             this.drawGrid();
@@ -346,12 +413,16 @@ export class PixelGrid {
     }
     
     updateRendererSize() {
-        const width = this.container.clientWidth;
-        const height = this.container.clientHeight;
+        if (!this.renderer) return;
+        
+        const width = this.container.clientWidth || 800;
+        const height = this.container.clientHeight || 400;
         
         // Update 3D renderer
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
+        if (this.camera) {
+            this.camera.aspect = width / height;
+            this.camera.updateProjectionMatrix();
+        }
         this.renderer.setSize(width, height);
         
         // Update 2D canvas display (keep internal resolution but adjust display size)
@@ -376,9 +447,13 @@ export class PixelGrid {
     resetView() {
         if (this.is3DMode) {
             // Reset camera position in 3D mode
-            this.camera.position.set(0, 200, 400);
-            this.camera.lookAt(0, 0, 0);
-            this.controls.reset();
+            if (this.camera) {
+                this.camera.position.set(0, 200, 400);
+                this.camera.lookAt(0, 0, 0);
+            }
+            if (this.controls && typeof this.controls.reset === 'function') {
+                this.controls.reset();
+            }
         } else {
             // In 2D mode, just redraw
             this.drawGrid();
@@ -399,27 +474,29 @@ export class PixelGrid {
         });
         
         // Three.js raycasting for 3D mode
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        
-        this.renderer.domElement.addEventListener('click', (event) => {
-            const rect = this.renderer.domElement.getBoundingClientRect();
-            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        if (this.renderer && typeof THREE !== 'undefined') {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
             
-            raycaster.setFromCamera(mouse, this.camera);
-            
-            const intersects = raycaster.intersectObjects(this.scene.children);
-            
-            // Check if we hit a pixel
-            for (const intersect of intersects) {
-                if (intersect.object.userData && intersect.object.userData.pixelX !== undefined) {
-                    const { pixelX, pixelY } = intersect.object.userData;
-                    this.handlePixelClick(pixelX, pixelY);
-                    break;
+            this.renderer.domElement.addEventListener('click', (event) => {
+                const rect = this.renderer.domElement.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                
+                raycaster.setFromCamera(mouse, this.camera);
+                
+                const intersects = raycaster.intersectObjects(this.scene.children);
+                
+                // Check if we hit a pixel
+                for (const intersect of intersects) {
+                    if (intersect.object.userData && intersect.object.userData.pixelX !== undefined) {
+                        const { pixelX, pixelY } = intersect.object.userData;
+                        this.handlePixelClick(pixelX, pixelY);
+                        break;
+                    }
                 }
-            }
-        });
+            });
+        }
         
         // Handle window resize
         window.addEventListener('resize', () => {
@@ -461,8 +538,12 @@ export class PixelGrid {
         this.pixels = new Array(this.width * this.height).fill(null);
         
         // Load new pixels
-        for (const pixel of pixelsData) {
-            this.setPixel(pixel.x, pixel.y, pixel);
+        if (Array.isArray(pixelsData)) {
+            for (const pixel of pixelsData) {
+                if (pixel && pixel.x !== undefined && pixel.y !== undefined) {
+                    this.setPixel(pixel.x, pixel.y, pixel);
+                }
+            }
         }
         
         // Redraw
@@ -474,8 +555,10 @@ export class PixelGrid {
         
         if (this.is3DMode) {
             // In 3D mode, adjust camera
-            this.camera.position.z = 400 / scale;
-            this.camera.updateProjectionMatrix();
+            if (this.camera) {
+                this.camera.position.z = 400 / scale;
+                this.camera.updateProjectionMatrix();
+            }
         } else {
             // In 2D mode, resize canvas
             this.canvas.style.transform = `scale(${scale})`;
