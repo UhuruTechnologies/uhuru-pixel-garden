@@ -1,7 +1,9 @@
-// PixelGrid.js - Non-module version
+// PixelGrid.js - Handles 2D and 3D pixel grid rendering
 
 class PixelGrid {
     constructor(container) {
+        console.log("Initializing PixelGrid...");
+        
         // Get configuration from global object or use defaults
         const config = window.uhuruConfig || {
             grid: {
@@ -28,36 +30,56 @@ class PixelGrid {
         // Zoom scale
         this.zoomScale = 1;
         
-        // Initialize both renderers
+        // Initialize 2D canvas first
         this.initCanvas();
         
-        // Only initialize 3D if THREE is available
+        // Check if THREE.js is loaded before initializing 3D
         if (typeof THREE !== 'undefined') {
-            this.init3D();
+            console.log("THREE.js is available, initializing 3D view");
+            try {
+                this.init3D();
+            } catch (error) {
+                console.error("Failed to initialize 3D view:", error);
+            }
         } else {
-            console.warn('THREE.js not found, 3D mode will be unavailable');
+            console.warn("THREE.js not found, 3D mode will be unavailable");
         }
         
         // Event handlers
         this.onPixelClickHandlers = [];
         this.setupEventListeners();
+        
+        console.log("PixelGrid initialized");
     }
     
     initCanvas() {
-        // Create 2D canvas
-        this.canvas = document.createElement('canvas');
-        this.canvasBaseWidth = this.width * this.pixelSize;
-        this.canvasBaseHeight = this.height * this.pixelSize;
-        this.canvas.width = this.canvasBaseWidth;
-        this.canvas.height = this.canvasBaseHeight;
-        this.ctx = this.canvas.getContext('2d');
-        
-        // Add canvas to container
-        this.canvas.style.display = 'block';
-        this.container.appendChild(this.canvas);
-        
-        // Draw initial grid
-        this.drawGrid();
+        try {
+            // Create 2D canvas
+            this.canvas = document.createElement('canvas');
+            this.canvasBaseWidth = this.width * this.pixelSize;
+            this.canvasBaseHeight = this.height * this.pixelSize;
+            this.canvas.width = this.canvasBaseWidth;
+            this.canvas.height = this.canvasBaseHeight;
+            this.ctx = this.canvas.getContext('2d');
+            
+            // Add canvas to container
+            this.canvas.style.display = 'block';
+            this.container.appendChild(this.canvas);
+            
+            // Draw initial grid
+            this.drawGrid();
+            console.log("2D canvas initialized");
+        } catch (error) {
+            console.error("Error initializing canvas:", error);
+            
+            // Create a fallback display
+            const fallback = document.createElement('div');
+            fallback.innerHTML = `<div style="padding: 20px; background-color: #f8f9fa; border-radius: 8px; text-align: center;">
+                <h3 style="color: #4CAF50;">Canvas Initialization Failed</h3>
+                <p>Unable to initialize the pixel grid. Please try refreshing the page.</p>
+            </div>`;
+            this.container.appendChild(fallback);
+        }
     }
     
     init3D() {
@@ -87,8 +109,7 @@ class PixelGrid {
                 this.controls.enableDamping = true;
                 this.controls.dampingFactor = 0.1;
             } else {
-                console.warn('OrbitControls not found, using basic controls');
-                // Fallback - implement basic controls if needed
+                console.warn("OrbitControls not found");
             }
             
             // Lighting
@@ -109,8 +130,11 @@ class PixelGrid {
             
             // Start render loop
             this.animate();
+            
+            console.log("3D view initialized");
         } catch (error) {
-            console.error('Error initializing 3D view:', error);
+            console.error("Error initializing 3D view:", error);
+            // We'll continue in 2D mode if 3D initialization fails
         }
     }
     
@@ -169,17 +193,25 @@ class PixelGrid {
     }
     
     animate() {
-        requestAnimationFrame(() => this.animate());
+        if (!this.renderer) return;
         
-        if (this.is3DMode) {
-            if (this.controls && this.controls.update) {
-                this.controls.update();
+        const animateLoop = () => {
+            requestAnimationFrame(animateLoop);
+            
+            if (this.is3DMode) {
+                if (this.controls && this.controls.update) {
+                    this.controls.update();
+                }
+                this.renderer.render(this.scene, this.camera);
             }
-            this.renderer.render(this.scene, this.camera);
-        }
+        };
+        
+        animateLoop();
     }
     
     drawGrid() {
+        if (!this.ctx) return;
+        
         // Clear canvas
         this.ctx.fillStyle = '#f0f0f0';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -223,11 +255,13 @@ class PixelGrid {
     }
     
     drawPixel2D(x, y, color) {
+        if (!this.ctx) return;
+        
         const padding = 1; // Small padding for visual clarity
         this.ctx.fillStyle = color || '#cccccc';
         
         // Check if color is actually an image data URL
-        if (color && color.startsWith('data:image')) {
+        if (color && typeof color === 'string' && color.startsWith('data:image')) {
             const img = new Image();
             img.onload = () => {
                 this.ctx.drawImage(
@@ -250,6 +284,8 @@ class PixelGrid {
     }
     
     highlightPixel(x, y) {
+        if (!this.ctx) return;
+        
         this.ctx.strokeStyle = '#ff5722';
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(
@@ -280,7 +316,7 @@ class PixelGrid {
             let material;
             
             // Check if color is actually an image data URL
-            if (pixelData.color && pixelData.color.startsWith('data:image')) {
+            if (pixelData.color && typeof pixelData.color === 'string' && pixelData.color.startsWith('data:image')) {
                 // Create texture from image
                 const texture = new THREE.TextureLoader().load(pixelData.color);
                 material = new THREE.MeshStandardMaterial({
@@ -326,7 +362,13 @@ class PixelGrid {
             if (pixelData && pixelData.mesh) {
                 this.scene.remove(pixelData.mesh);
                 if (pixelData.mesh.geometry) pixelData.mesh.geometry.dispose();
-                if (pixelData.mesh.material) pixelData.mesh.material.dispose();
+                if (pixelData.mesh.material) {
+                    if (Array.isArray(pixelData.mesh.material)) {
+                        pixelData.mesh.material.forEach(material => material.dispose());
+                    } else {
+                        pixelData.mesh.material.dispose();
+                    }
+                }
                 pixelData.mesh = null;
             }
         } catch (error) {
@@ -407,8 +449,10 @@ class PixelGrid {
         const height = this.container.clientHeight;
         
         // Update 3D renderer
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
+        if (this.camera) {
+            this.camera.aspect = width / height;
+            this.camera.updateProjectionMatrix();
+        }
         this.renderer.setSize(width, height);
         
         // Update 2D canvas display (keep internal resolution but adjust display size)
@@ -524,9 +568,11 @@ class PixelGrid {
         this.pixels = new Array(this.width * this.height).fill(null);
         
         // Load new pixels
-        for (const pixel of pixelsData) {
-            if (pixel && pixel.x !== undefined && pixel.y !== undefined) {
-                this.setPixel(pixel.x, pixel.y, pixel);
+        if (Array.isArray(pixelsData)) {
+            for (const pixel of pixelsData) {
+                if (pixel && pixel.x !== undefined && pixel.y !== undefined) {
+                    this.setPixel(pixel.x, pixel.y, pixel);
+                }
             }
         }
         
