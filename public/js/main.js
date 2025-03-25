@@ -1,3 +1,6 @@
+// Add this to the top of main.js
+console.log("Main.js loading...");
+
 // Show payment instructions
 function showPaymentInstructions() {
     if (!currentEditingPixel) {
@@ -447,16 +450,17 @@ let currentImageDataUrl = null;
 function initApp() {
     console.log("Initializing Uhuru Pixel Garden application...");
     
-    // Initialize the pixel grid
-    const canvasContainer = document.getElementById('canvasContainer');
-    if (!canvasContainer) {
-        console.error('Canvas container not found');
+    // Debug check for elements
+    const elements = checkElements();
+    if (!elements.canvasContainer) {
+        console.error('Critical elements missing');
         return;
     }
-    
+
     try {
         console.log("Creating pixel grid...");
-        pixelGrid = new PixelGrid(canvasContainer);
+        // Use the global PixelGrid class
+        pixelGrid = new window.PixelGrid(elements.canvasContainer);
         
         // Set up click handler
         pixelGrid.onPixelClick((x, y, pixelData) => {
@@ -481,6 +485,7 @@ function initApp() {
         console.log("Application initialized");
     } catch (error) {
         console.error('Error initializing pixel grid:', error);
+        console.error(error.stack); // Add stack trace for better debugging
         createFallbackGrid();
     }
 }
@@ -826,19 +831,24 @@ function removeImage() {
     currentImageDataUrl = null;
 }
 
-// Add this at the start of initApp()
+// Add this to checkElements()
 function checkElements() {
+    console.log("Checking for required elements...");
     const elements = {
         canvasContainer: document.getElementById('canvasContainer'),
         startExploringBtn: document.getElementById('startExploringBtn'),
         welcomeOverlay: document.getElementById('welcomeOverlay'),
         pixelEditor: document.getElementById('pixelEditor'),
-        // Add other important elements
     };
 
     console.log("Found elements:", Object.entries(elements)
         .map(([name, el]) => `${name}: ${el ? 'YES' : 'NO'}`)
         .join(', '));
+    
+    // Check if config is loaded
+    console.log("Config loaded:", window.config ? 'YES' : 'NO');
+    // Check if PixelGrid is loaded
+    console.log("PixelGrid loaded:", window.PixelGrid ? 'YES' : 'NO');
     
     return elements;
 }

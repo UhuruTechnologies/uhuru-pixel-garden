@@ -598,3 +598,6 @@ class PixelGrid {
         }
     }
 }
+
+// Make it available globally
+window.PixelGrid = PixelGrid;

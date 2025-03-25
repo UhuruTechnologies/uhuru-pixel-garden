@@ -2,7 +2,7 @@
 // Simple global variable approach to avoid module loading issues
 
 // Define the global config object
-window.uhuruConfig = {
+window.config = {
     // Grid configuration
     grid: {
         width: 100,      // Number of pixels in width

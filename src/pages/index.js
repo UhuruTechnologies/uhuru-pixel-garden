@@ -260,7 +260,7 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Load THREE.js libraries first */}
+      {/* Load THREE.js first */}
       <Script 
         src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" 
         strategy="beforeInteractive"
@@ -270,11 +270,20 @@ export default function HomePage() {
         strategy="beforeInteractive"
       />
 
-      {/* Then load our application scripts in order */}
+      {/* Then load our scripts in order */}
       <Script src="/js/config.js" strategy="afterInteractive" />
       <Script src="/js/pixelGrid.js" strategy="afterInteractive" />
       <Script src="/js/main.js" strategy="afterInteractive" />
       
+      {/* Add error handling for script loading */}
+      <Script id="error-handler" strategy="afterInteractive">
+        {`
+          window.addEventListener('error', function(e) {
+            console.error('Script error:', e);
+          });
+        `}
+      </Script>
+
       {/* Backup script for welcome overlay */}
       <Script id="welcome-script" strategy="afterInteractive">
         {`
