@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import Head from 'next/head';
 import Script from 'next/script';
+import PixelGridClient from '../components/PixelGridClient';
 
 export default function HomePage() {
   // Handle the welcome overlay button click
@@ -157,13 +158,7 @@ export default function HomePage() {
           </ol>
         </div>
 
-        <div id="canvasContainer" style={{
-          width: '100%',
-          height: '600px',
-          position: 'relative',
-          backgroundColor: '#f0f0f0',
-          margin: '20px 0'
-        }}></div>
+        <PixelGridClient />
 
         <div id="pixelEditor" className="hidden">
           <h2>Customize Your Pixel</h2>

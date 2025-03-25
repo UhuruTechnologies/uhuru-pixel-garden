@@ -1,4 +1,15 @@
-module.exports = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  transpilePackages: ['three'],
+  webpack: (config) => {
+    // This helps with THREE.js compatibility
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'three': require.resolve('three')
+    };
+    return config;
+  },
   async headers() {
     return [
       {
@@ -12,4 +23,6 @@ module.exports = {
       },
     ];
   },
-}; 
+};
+
+module.exports = nextConfig; 
