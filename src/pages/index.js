@@ -270,7 +270,7 @@ export default function HomePage() {
         strategy="beforeInteractive"
       />
 
-      {/* Then load our application scripts */}
+      {/* Then load our application scripts in order */}
       <Script src="/js/config.js" strategy="afterInteractive" />
       <Script src="/js/pixelGrid.js" strategy="afterInteractive" />
       <Script src="/js/main.js" strategy="afterInteractive" />

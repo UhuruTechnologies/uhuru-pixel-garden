@@ -436,117 +436,25 @@ function spawnRandomMeme() {
     }, 4000);
 }
 
-// Initialize on load
-if (document.readyState === 'complete') {
-    initApp();
-} else {
-    document.addEventListener('DOMContentLoaded', initApp);
-}
-
-// Extra backup for welcome overlay
-(function() {
-    try {
-        const startExploringBtn = document.getElementById('startExploringBtn');
-        if (startExploringBtn) {
-            console.log("Setting up immediate welcome button handler");
-            startExploringBtn.onclick = function() {
-                const welcomeOverlay = document.getElementById('welcomeOverlay');
-                if (welcomeOverlay) welcomeOverlay.classList.add('hidden');
-            };
-        }
-    } catch (error) {
-        console.error("Error in immediate welcome button setup:", error);
-    }
-})();
-
 // State variables
 let pixelGrid = null;
 let currentEditingPixel = null;
-let isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches; // Default based on system
+let isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
 let currentZoomScale = 1;
 let currentImageDataUrl = null;
-
-// Initialize when document is ready
-document.addEventListener('DOMContentLoaded', initApp);
-window.addEventListener('load', handleWelcomeOverlay);
 
 // Initialize application
 function initApp() {
     console.log("Initializing Uhuru Pixel Garden application...");
     
-    // Handle welcome overlay button
-    setupWelcomeOverlay();
-    
     // Initialize the pixel grid
-    initializePixelGrid();
-    
-    // Set up UI event handlers
-    setupUIEventHandlers();
-    
-    // Set initial theme
-    setTheme(isDarkMode);
-    
-    // Create fun visual elements
-    createDancingPixels();
-    createConfetti();
-    
-    console.log("Application initialized");
-}
-
-// Setup welcome overlay and its button
-function setupWelcomeOverlay() {
-    const startExploringBtn = document.getElementById('startExploringBtn');
-    const welcomeOverlay = document.getElementById('welcomeOverlay');
-    
-    if (startExploringBtn && welcomeOverlay) {
-        console.log("Setting up welcome overlay button");
-        
-        // Use multiple event handlers to ensure it works
-        startExploringBtn.addEventListener('click', function(e) {
-            console.log("Start exploring button clicked");
-            welcomeOverlay.classList.add('hidden');
-        });
-        
-        // Also set direct onclick handler
-        startExploringBtn.onclick = function() {
-            console.log("Start exploring button onclick triggered");
-            welcomeOverlay.classList.add('hidden');
-        };
-    } else {
-        console.warn("Welcome overlay elements not found");
+    const canvasContainer = document.getElementById('canvasContainer');
+    if (!canvasContainer) {
+        console.error('Canvas container not found');
+        return;
     }
     
-    // Set up Buy POT buttons
-    document.querySelectorAll('.buy-pot-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            window.open('https://pump.fun', '_blank');
-        });
-    });
-}
-
-// Ensure the welcome overlay button works
-function handleWelcomeOverlay() {
-    const button = document.getElementById('startExploringBtn');
-    const overlay = document.getElementById('welcomeOverlay');
-    
-    if (button && overlay) {
-        // Set onclick handler again
-        button.onclick = function() {
-            console.log("Overlay button clicked (from load handler)");
-            overlay.classList.add('hidden');
-        };
-    }
-}
-
-// Initialize the pixel grid
-function initializePixelGrid() {
     try {
-        const canvasContainer = document.getElementById('canvasContainer');
-        if (!canvasContainer) {
-            console.error('Canvas container not found');
-            return;
-        }
-        
         console.log("Creating pixel grid...");
         pixelGrid = new PixelGrid(canvasContainer);
         
@@ -564,32 +472,41 @@ function initializePixelGrid() {
         loadMockPixelData();
         updateProjectStats();
         
-        console.log("Pixel grid initialized");
+        // Set up UI event handlers
+        setupUIEventHandlers();
+        
+        // Set initial theme
+        setTheme(isDarkMode);
+        
+        console.log("Application initialized");
     } catch (error) {
         console.error('Error initializing pixel grid:', error);
         createFallbackGrid();
     }
 }
 
-// Create a fallback grid if PixelGrid initialization fails
-function createFallbackGrid() {
-    const canvasContainer = document.getElementById('canvasContainer');
-    if (!canvasContainer) return;
-    
-    console.log("Creating fallback grid display");
-    
-    canvasContainer.innerHTML = `
-        <div style="text-align: center; padding: 3rem; background-color: #f5f5f5; border-radius: 8px;">
-            <h2 style="color: #4CAF50; margin-bottom: 1rem;">Pixel Grid</h2>
-            <p>The interactive grid could not be loaded. Please refresh the page or try a different browser.</p>
-            <div style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; margin: 2rem auto; max-width: 300px;">
-                ${Array(100).fill().map((_, i) => 
-                    `<div style="aspect-ratio: 1; background-color: ${['#FF9800', '#4CAF50', '#2196F3', '#9C27B0', '#F44336'][Math.floor(Math.random() * 5)]}; opacity: ${Math.random() * 0.3 + 0.1}; border-radius: 2px;"></div>`
-                ).join('')}
-            </div>
-        </div>
-    `;
+// Make sure we initialize only once the DOM is ready
+if (document.readyState === 'complete') {
+    initApp();
+} else {
+    document.addEventListener('DOMContentLoaded', initApp);
 }
+
+// Add a backup initialization for the welcome overlay
+(function() {
+    try {
+        const startExploringBtn = document.getElementById('startExploringBtn');
+        if (startExploringBtn) {
+            console.log("Setting up immediate welcome button handler");
+            startExploringBtn.onclick = function() {
+                const welcomeOverlay = document.getElementById('welcomeOverlay');
+                if (welcomeOverlay) welcomeOverlay.classList.add('hidden');
+            };
+        }
+    } catch (error) {
+        console.error("Error in immediate welcome button setup:", error);
+    }
+})();
 
 // Set up UI event handlers
 function setupUIEventHandlers() {
@@ -907,4 +824,27 @@ function removeImage() {
     }
     
     currentImageDataUrl = null;
+}
+
+// Add this at the start of initApp()
+function checkElements() {
+    const elements = {
+        canvasContainer: document.getElementById('canvasContainer'),
+        startExploringBtn: document.getElementById('startExploringBtn'),
+        welcomeOverlay: document.getElementById('welcomeOverlay'),
+        pixelEditor: document.getElementById('pixelEditor'),
+        // Add other important elements
+    };
+
+    console.log("Found elements:", Object.entries(elements)
+        .map(([name, el]) => `${name}: ${el ? 'YES' : 'NO'}`)
+        .join(', '));
+    
+    return elements;
+}
+
+const elements = checkElements();
+if (!elements.canvasContainer) {
+    console.error('Critical elements missing');
+    return;
 }
