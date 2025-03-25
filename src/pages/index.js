@@ -1,7 +1,12 @@
 import React, { useEffect } from 'react';
 import Head from 'next/head';
 import Script from 'next/script';
-import PixelGridClient from '../components/PixelGridClient';
+import dynamic from 'next/dynamic';
+
+// Import the PixelGrid client component with dynamic import
+const PixelGridClient = dynamic(() => import('../components/PixelGridClient'), {
+  ssr: false // Disable server-side rendering for this component
+});
 
 export default function HomePage() {
   // Handle the welcome overlay button click
