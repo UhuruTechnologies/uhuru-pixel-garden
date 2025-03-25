@@ -450,17 +450,39 @@ let currentImageDataUrl = null;
 function initApp() {
     console.log("Initializing Uhuru Pixel Garden application...");
     
-    // Debug check for elements
-    const elements = checkElements();
-    if (!elements.canvasContainer) {
-        console.error('Critical elements missing');
+    // Debug check for elements and dependencies
+    const checks = {
+        elements: checkElements(),
+        three: !!window.THREE,
+        config: !!window.uhuruConfig,
+        pixelGrid: !!window.PixelGrid
+    };
+    
+    console.log("Initialization checks:", checks);
+    
+    if (!checks.elements.canvasContainer) {
+        console.error('Canvas container not found');
+        return;
+    }
+    
+    if (!checks.three) {
+        console.error('THREE.js not loaded');
+        return;
+    }
+    
+    if (!checks.config) {
+        console.error('Config not loaded');
+        return;
+    }
+    
+    if (!checks.pixelGrid) {
+        console.error('PixelGrid class not loaded');
         return;
     }
 
     try {
         console.log("Creating pixel grid...");
-        // Use the global PixelGrid class
-        pixelGrid = new window.PixelGrid(elements.canvasContainer);
+        pixelGrid = new window.PixelGrid(checks.elements.canvasContainer);
         
         // Set up click handler
         pixelGrid.onPixelClick((x, y, pixelData) => {
@@ -482,20 +504,16 @@ function initApp() {
         // Set initial theme
         setTheme(isDarkMode);
         
-        console.log("Application initialized");
+        console.log("Application initialized successfully");
     } catch (error) {
         console.error('Error initializing pixel grid:', error);
-        console.error(error.stack); // Add stack trace for better debugging
+        console.error(error.stack);
         createFallbackGrid();
     }
 }
 
-// Make sure we initialize only once the DOM is ready
-if (document.readyState === 'complete') {
-    initApp();
-} else {
-    document.addEventListener('DOMContentLoaded', initApp);
-}
+// Make initApp globally available
+window.initApp = initApp;
 
 // Add a backup initialization for the welcome overlay
 (function() {

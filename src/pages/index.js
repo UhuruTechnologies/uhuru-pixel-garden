@@ -147,7 +147,13 @@ export default function HomePage() {
           </ol>
         </div>
 
-        <div id="canvasContainer"></div>
+        <div id="canvasContainer" style={{
+          width: '100%',
+          height: '600px',
+          position: 'relative',
+          backgroundColor: '#f0f0f0',
+          margin: '20px 0'
+        }}></div>
 
         <div id="pixelEditor" className="hidden">
           <h2>Customize Your Pixel</h2>
@@ -270,31 +276,40 @@ export default function HomePage() {
         strategy="beforeInteractive"
       />
 
-      {/* Then load our scripts in order */}
-      <Script src="/js/config.js" strategy="afterInteractive" />
-      <Script src="/js/pixelGrid.js" strategy="afterInteractive" />
-      <Script src="/js/main.js" strategy="afterInteractive" />
-      
-      {/* Add error handling for script loading */}
-      <Script id="error-handler" strategy="afterInteractive">
+      {/* Initialize our application */}
+      <Script id="init-app" strategy="afterInteractive">
         {`
-          window.addEventListener('error', function(e) {
-            console.error('Script error:', e);
-          });
-        `}
-      </Script>
+          // Wait for DOM and THREE.js to be ready
+          window.addEventListener('load', function() {
+            if (!window.THREE) {
+              console.error('THREE.js not loaded');
+              return;
+            }
 
-      {/* Backup script for welcome overlay */}
-      <Script id="welcome-script" strategy="afterInteractive">
-        {`
-          document.addEventListener('DOMContentLoaded', function() {
-            const button = document.getElementById('startExploringBtn');
-            const overlay = document.getElementById('welcomeOverlay');
-            if (button && overlay) {
-              button.addEventListener('click', function() {
-                overlay.classList.add('hidden');
+            // Load our scripts in order
+            function loadScript(src) {
+              return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.body.appendChild(script);
               });
             }
+
+            // Load scripts in sequence
+            loadScript('/js/config.js')
+              .then(() => loadScript('/js/pixelGrid.js'))
+              .then(() => loadScript('/js/main.js'))
+              .then(() => {
+                console.log('All scripts loaded, initializing app...');
+                if (window.initApp) {
+                  window.initApp();
+                }
+              })
+              .catch(error => {
+                console.error('Error loading scripts:', error);
+              });
           });
         `}
       </Script>

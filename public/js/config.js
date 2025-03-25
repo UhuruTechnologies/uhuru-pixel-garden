@@ -1,8 +1,5 @@
 // Configuration for the Uhuru Community Pixel Garden
-// Simple global variable approach to avoid module loading issues
-
-// Define the global config object
-window.config = {
+const config = {
     // Grid configuration
     grid: {
         width: 100,      // Number of pixels in width
@@ -40,3 +37,10 @@ window.config = {
         directionalLightIntensity: 0.8
     }
 };
+
+// Make it available both as a module export and global variable
+if (typeof window !== 'undefined') {
+    window.uhuruConfig = config;
+}
+
+export { config };
