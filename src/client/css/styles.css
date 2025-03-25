@@ -1,0 +1,911 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', 'Comfortaa', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+:root {
+    /* Light theme colors */
+    --primary-color: #4CAF50;
+    --primary-dark: #2E7D32;
+    --accent-color: #FF9800;
+    --bg-color: #f5f5f5;
+    --text-color: #333;
+    --card-bg: #fff;
+    --border-color: #ddd;
+    --header-bg: #fff;
+    --header-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --popup-overlay: rgba(0, 0, 0, 0.85);
+    --footer-bg: #333;
+    --footer-text: #fff;
+}
+
+[data-theme="dark"] {
+    /* Dark theme colors */
+    --primary-color: #66BB6A;
+    --primary-dark: #43A047;
+    --accent-color: #FFA726;
+    --bg-color: #121212;
+    --text-color: #f0f0f0;
+    --card-bg: #1e1e1e;
+    --border-color: #333;
+    --header-bg: #1a1a1a;
+    --header-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    --popup-overlay: rgba(0, 0, 0, 0.95);
+    --footer-bg: #1a1a1a;
+    --footer-text: #f0f0f0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Overlay Styles */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--popup-overlay);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.connect-container {
+    background-color: var(--card-bg);
+    padding: 2rem;
+    border-radius: 10px;
+    max-width: 600px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+}
+
+.logo-container {
+    margin: 0 auto 1.5rem;
+    width: 120px;
+    height: 120px;
+}
+
+.logo-container svg {
+    width: 100%;
+    height: 100%;
+    animation: logoFloatAndSpin 5s ease-in-out infinite;
+}
+
+@keyframes logoFloatAndSpin {
+    0% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-10px) rotate(5deg); }
+    50% { transform: translateY(0) rotate(0deg); }
+    75% { transform: translateY(-5px) rotate(-5deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+
+/* Add confetti animation */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: var(--accent-color);
+    opacity: 0.8;
+    animation: confettiFall linear forwards;
+    z-index: 5;
+}
+
+@keyframes confettiFall {
+    0% { transform: translateY(-10px) rotate(0deg); opacity: 0.7; }
+    100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+}
+
+/* Theme toggle button */
+.theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    z-index: 900;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1) rotate(10deg);
+}
+
+.theme-toggle svg {
+    width: 25px;
+    height: 25px;
+    fill: white;
+    transition: transform 0.5s ease;
+}
+
+.theme-toggle:hover svg {
+    transform: rotate(30deg);
+}
+
+/* Header Styles */
+header {
+    background-color: var(--header-bg);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--header-shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.logo-small {
+    width: 50px;
+    height: 50px;
+    animation: smallSpin 10s linear infinite;
+}
+
+@keyframes smallSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+header h1 {
+    font-size: 1.5rem;
+    color: var(--primary-dark);
+    transition: color 0.3s ease;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+/* Fun badge for wallet info */
+.wallet-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    padding: 8px 12px;
+    background-color: var(--bg-color);
+    border-radius: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.wallet-info:hover {
+    transform: scale(1.05);
+}
+
+.wallet-info .buy-pot-btn {
+    background-color: #FF6B00;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+}
+
+.wallet-info .buy-pot-btn:hover {
+    background-color: #E05A00;
+    transform: scale(1.05);
+}
+
+/* Meme-style buttons */
+#connectWallet, #viewOnlyBtn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 2rem;
+    font-weight: bold;
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+}
+
+#connectWallet:hover, #viewOnlyBtn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-5px) rotate(2deg);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+#connectWallet:active, #viewOnlyBtn:active {
+    transform: translateY(2px);
+}
+
+#connectWallet::after {
+    content: "🚀";
+    position: absolute;
+    font-size: 1.5rem;
+    right: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: right 0.3s ease;
+}
+
+#connectWallet:hover::after {
+    right: 20px;
+}
+
+#viewOnlyBtn {
+    background-color: var(--accent-color);
+    margin-left: 10px;
+}
+
+#viewOnlyBtn::after {
+    content: "👁️";
+    position: absolute;
+    font-size: 1.5rem;
+    right: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: right 0.3s ease;
+}
+
+#viewOnlyBtn:hover::after {
+    right: 20px;
+}
+
+#buyPotBtn {
+    background-color: #FF6B00;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 2rem;
+    font-weight: bold;
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+}
+
+#buyPotBtn:hover {
+    background-color: #E05A00;
+    transform: translateY(-5px) rotate(-2deg);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+#buyPotBtn:active {
+    transform: translateY(2px);
+}
+
+#buyPotBtn::after {
+    content: "💰";
+    position: absolute;
+    font-size: 1.5rem;
+    right: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: right 0.3s ease;
+}
+
+#buyPotBtn:hover::after {
+    right: 20px;
+}
+
+/* Fun tooltip animation */
+.tip {
+    position: relative;
+}
+
+.tip:hover::before {
+    content: attr(data-tip);
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--primary-color);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 100;
+    animation: bounceTip 0.3s ease;
+}
+
+@keyframes bounceTip {
+    0% { transform: translateX(-50%) scale(0); }
+    70% { transform: translateX(-50%) scale(1.1); }
+    100% { transform: translateX(-50%) scale(1); }
+}
+
+/* Main Content Styles */
+main {
+    padding: 2rem;
+    max-width: 1600px;
+    margin: 0 auto;
+    position: relative;
+}
+
+/* Pulsing button effect */
+.controls button {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.controls button:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.controls button.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
+
+/* Add dancing pixel animation */
+.dancing-pixel {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: var(--accent-color);
+    border-radius: 3px;
+    pointer-events: none;
+    animation: dance 3s infinite alternate ease-in-out;
+    z-index: 5;
+    opacity: 0.8;
+}
+
+@keyframes dance {
+    0% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-20px) rotate(5deg); }
+    50% { transform: translateY(0) rotate(0deg); }
+    75% { transform: translateY(-10px) rotate(-5deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+
+/* Meme section */
+.meme-corner {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 90;
+    width: 80px;
+    height: 80px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.meme-corner:hover {
+    transform: scale(1.2) rotate(10deg);
+}
+
+.meme-content {
+    position: fixed;
+    bottom: 110px;
+    left: 20px;
+    background-color: var(--card-bg);
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    max-width: 300px;
+    transform: scale(0);
+    transform-origin: bottom left;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 89;
+}
+
+.meme-corner:hover + .meme-content {
+    transform: scale(1);
+}
+
+.meme-content p {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.meme-content img {
+    max-width: 100%;
+    border-radius: 5px;
+}
+
+footer {
+    background-color: var(--footer-bg);
+    color: var(--footer-text);
+    padding: 2rem;
+    margin-top: 3rem;
+    transition: background-color 0.3s ease;
+}
+
+.copyright {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    text-align: center;
+}
+
+/* Pixel Editor Styles */
+#pixelEditor {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    width: 300px;
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 200;
+}
+
+#pixelEditor h2 {
+    color: var(--primary-dark);
+    margin-bottom: 1.5rem;
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+.editor-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.color-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.color-picker label, .height-slider label, .message-input label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+#pixelColor {
+    height: 40px;
+    cursor: pointer;
+}
+
+.image-upload-wrapper {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.image-upload-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.hidden-file-input {
+    display: none;
+}
+
+.upload-image-btn {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.upload-image-btn:hover {
+    background-color: #E08600;
+    transform: translateY(-2px);
+}
+
+.image-preview {
+    width: 100%;
+    height: 120px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+.remove-image-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s;
+    align-self: flex-end;
+}
+
+.remove-image-btn:hover {
+    background-color: #d32f2f;
+}
+
+#pixelHeight {
+    width: 100%;
+}
+
+#pixelMessage {
+    width: 100%;
+    height: 80px;
+    padding: 0.5rem;
+    resize: none;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.nft-info {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+}
+
+.nft-info p {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+#pixelPrice {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.editor-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+}
+
+.editor-buttons button {
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+#cancelEdit {
+    background-color: #f1f1f1;
+    border: 1px solid #ddd;
+    color: #666;
+}
+
+#purchasePixel {
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+}
+
+#purchasePixel:hover {
+    background-color: var(--primary-dark);
+}
+
+/* New payment popup styles */
+.payment-instructions {
+    line-height: 1.6;
+}
+
+.payment-instructions ol {
+    margin: 15px 0;
+    padding-left: 20px;
+}
+
+.payment-instructions li {
+    margin-bottom: 15px;
+}
+
+.burn-address, .reference-code {
+    background-color: var(--bg-color);
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.burn-address code, .reference-code code {
+    font-family: monospace;
+    font-size: 0.9rem;
+    word-break: break-all;
+}
+
+.copy-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s;
+}
+
+.copy-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+.payment-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.payment-buttons button {
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+#cancelPaymentBtn {
+    background-color: #f1f1f1;
+    border: 1px solid #ddd;
+    color: #666;
+}
+
+#verifyPaymentBtn {
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+}
+
+#verifyPaymentBtn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+#transactionId {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    margin-top: 5px;
+}
+
+.payment-note {
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #666;
+    background-color: rgba(255, 152, 0, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 3px solid var(--accent-color);
+}
+
+/* Owner info fields in pixel editor */
+.owner-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.owner-info input {
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+/* Update header actions */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Popup Styles */
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+}
+
+.close-popup {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+}
+
+.popup h3 {
+    color: var(--primary-dark);
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+#pixelInfoContent {
+    margin-top: 1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    margin: 1rem auto;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#transactionStatus {
+    text-align: center;
+    margin-top: 1rem;
+    font-weight: 500;
+}
+
+.instructions {
+    background-color: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+}
+
+.instructions h2 {
+    color: var(--primary-dark);
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.instructions ol {
+    padding-left: 1.5rem;
+}
+
+.instructions li {
+    margin-bottom: 0.8rem;
+}
+
+.instructions .highlight {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Footer Styles */
+.social-links {
+    display: flex;
+    gap: 1rem;
+}
+
+.social-icon {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+.social-icon:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.project-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.project-stats span {
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+/* Utility Classes */
+.hidden {
+    display: none;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .controls {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    #pixelEditor {
+        position: fixed;
+        right: 0;
+        left: 0;
+        top: auto;
+        bottom: 0;
+        transform: none;
+        width: 100%;
+        border-radius: 12px 12px 0 0;
+        max-height: 80vh;
+    }
+}
+
+/* Toast styling */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 1000;
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}

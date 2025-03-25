@@ -1,0 +1,35 @@
+{
+    "name": "uhuru-community-pixel-garden",
+    "version": "1.0.0",
+    "description": "A community-driven digital mural supporting the Uhuru Cultural Arts Institute",
+    "main": "index.js",
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "next lint"
+    },
+    "keywords": [
+      "pixel",
+      "art",
+      "community",
+      "blockchain",
+      "solana",
+      "charity"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+      "@solana/web3.js": "^1.87.6",
+      "mongodb": "^6.3.0",
+      "mongoose": "^8.0.1",
+      "next": "^14.0.3",
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "three": "^0.160.0"
+    },
+    "devDependencies": {
+      "eslint": "^8.54.0",
+      "eslint-config-next": "^14.0.3"
+    }
+  }
