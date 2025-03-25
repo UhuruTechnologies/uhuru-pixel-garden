@@ -1,7 +1,7 @@
-import { config } from './config.js';
-import { PixelGrid } from './pixelGrid.js/index.js';
-import { PaymentHandler } from './paymentHandler.js';
-import { setupPixelEditor } from './pixel-utils.js';
+import { config } from './config';
+import { PixelGrid } from './pixelGrid';
+import { PaymentHandler } from './paymentHandler';
+import { setupPixelEditor } from './pixel-utils';
 
 // State variables
 let pixelGrid;
