@@ -1,8 +1,30 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Head from 'next/head';
 import Script from 'next/script';
 
 export default function HomePage() {
+  // Add client-side event handler for the Start Exploring button
+  useEffect(() => {
+    const handleStartExploring = () => {
+      const welcomeOverlay = document.getElementById('welcomeOverlay');
+      if (welcomeOverlay) {
+        welcomeOverlay.classList.add('hidden');
+      }
+    };
+
+    const startExploringBtn = document.getElementById('startExploringBtn');
+    if (startExploringBtn) {
+      startExploringBtn.addEventListener('click', handleStartExploring);
+    }
+
+    // Cleanup
+    return () => {
+      if (startExploringBtn) {
+        startExploringBtn.removeEventListener('click', handleStartExploring);
+      }
+    };
+  }, []);
+
   return (
     <>
       <Head>
@@ -238,7 +260,7 @@ export default function HomePage() {
             <div>Funds Raised: <span id="totalFundsRaised">$0</span></div>
           </div>
           <div className="copyright">
-            &copy; 2025 Uhuru Technologies. All rights reserved.
+            &copy; 2023 Uhuru Technologies. All rights reserved.
           </div>
         </div>
       </footer>
@@ -250,6 +272,23 @@ export default function HomePage() {
       <Script src="/js/pixelGrid.js" type="module" />
       <Script src="/js/pixel-utils.js" type="module" />
       <Script src="/js/main.js" type="module" />
+      
+      {/* Simple direct script for the welcome overlay button */}
+      <Script id="welcome-script" strategy="afterInteractive">
+        {`
+          if (typeof window !== 'undefined') {
+            window.onload = function() {
+              const button = document.getElementById('startExploringBtn');
+              if (button) {
+                button.onclick = function() {
+                  const overlay = document.getElementById('welcomeOverlay');
+                  if (overlay) overlay.classList.add('hidden');
+                }
+              }
+            }
+          }
+        `}
+      </Script>
     </>
   );
 }
