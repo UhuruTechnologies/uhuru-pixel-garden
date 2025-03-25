@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Script from 'next/script';
 
 export default function HomePage() {
-  // Add client-side event handler for the Start Exploring button
+  // Handle the welcome overlay button click
   useEffect(() => {
     const handleStartExploring = () => {
       const welcomeOverlay = document.getElementById('welcomeOverlay');
@@ -17,7 +17,6 @@ export default function HomePage() {
       startExploringBtn.addEventListener('click', handleStartExploring);
     }
 
-    // Cleanup
     return () => {
       if (startExploringBtn) {
         startExploringBtn.removeEventListener('click', handleStartExploring);
@@ -38,18 +37,6 @@ export default function HomePage() {
           rel="stylesheet"
         />
       </Head>
-
-      {/* Import map for Three.js modules */}
-      <Script id="importmap" type="importmap" dangerouslySetInnerHTML={{
-        __html: `
-        {
-          "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-          }
-        }
-        `
-      }} />
 
       {/* Theme Toggle Button */}
       <button id="themeToggle" className="theme-toggle" aria-label="Toggle dark/light mode">
@@ -93,7 +80,15 @@ export default function HomePage() {
           </div>
           <h1>Uhuru Community Pixel Garden</h1>
           <p>Support the Uhuru Cultural Arts Institute's library and Watoto Kwanza Special Needs Facility by purchasing and customizing pixel tiles.</p>
-          <button id="startExploringBtn">Start Exploring</button>
+          <button 
+            id="startExploringBtn" 
+            onClick={() => {
+              const overlay = document.getElementById('welcomeOverlay');
+              if (overlay) overlay.classList.add('hidden');
+            }}
+          >
+            Start Exploring
+          </button>
           <button id="mainBuyPotBtn" className="buy-pot-btn tip" data-tip="Get tokens!">Buy POT on pump.fun</button>
           <div className="project-info">
             <h2>About This Project</h2>
@@ -265,28 +260,33 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Load JavaScript modules */}
-      <Script src="/js/config.js" type="module" />
-      <Script src="/js/imageHandler.js" type="module" />
-      <Script src="/js/paymentHandler.js" type="module" />
-      <Script src="/js/pixelGrid.js" type="module" />
-      <Script src="/js/pixel-utils.js" type="module" />
-      <Script src="/js/main.js" type="module" />
+      {/* Load THREE.js libraries first */}
+      <Script 
+        src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js" 
+        strategy="beforeInteractive"
+      />
+      <Script 
+        src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"
+        strategy="beforeInteractive"
+      />
+
+      {/* Then load our application scripts */}
+      <Script src="/js/config.js" strategy="afterInteractive" />
+      <Script src="/js/pixelGrid.js" strategy="afterInteractive" />
+      <Script src="/js/main.js" strategy="afterInteractive" />
       
-      {/* Simple direct script for the welcome overlay button */}
+      {/* Backup script for welcome overlay */}
       <Script id="welcome-script" strategy="afterInteractive">
         {`
-          if (typeof window !== 'undefined') {
-            window.onload = function() {
-              const button = document.getElementById('startExploringBtn');
-              if (button) {
-                button.onclick = function() {
-                  const overlay = document.getElementById('welcomeOverlay');
-                  if (overlay) overlay.classList.add('hidden');
-                }
-              }
+          document.addEventListener('DOMContentLoaded', function() {
+            const button = document.getElementById('startExploringBtn');
+            const overlay = document.getElementById('welcomeOverlay');
+            if (button && overlay) {
+              button.addEventListener('click', function() {
+                overlay.classList.add('hidden');
+              });
             }
-          }
+          });
         `}
       </Script>
     </>

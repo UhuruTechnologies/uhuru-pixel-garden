@@ -1,6 +1,7 @@
 // Configuration for the Uhuru Community Pixel Garden
+// Global configuration object to be used by all scripts
 
-export const config = {
+window.uhuruConfig = {
     // Grid configuration
     grid: {
         width: 100,      // Number of pixels in width
@@ -11,7 +12,6 @@ export const config = {
     // Payment configuration
     payment: {
         // Using a designated Solana burn address - tokens sent here are effectively burned
-        // In production, you would use a real Solana burn address
         burnAddress: "1111111111111111111111111111111111111111111", // Solana's designated burn address
         pricePerPixel: 10000, // Base price in POT tokens
         additionalPricePerHeight: 10000, // Additional price per height level
