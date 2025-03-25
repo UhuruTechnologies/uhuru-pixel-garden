@@ -1,5 +1,5 @@
 import { config } from './config.js';
-import { PixelGrid } from './pixelGrid.js';
+import { PixelGrid } from './pixelGrid.js/index.js';
 import { PaymentHandler } from './paymentHandler.js';
 import { setupPixelEditor } from './pixel-utils.js';
 
